@@ -18,100 +18,89 @@ class DiscoveryTest extends TestCase
         $uri = uri_for('https://example.com');
 
         $result = $discovery->discover($response, $uri);
-        $this->assertEquals($expected, $result);
+        $this->assertEquals(array_values($expected), $result);
     }
 
     public function provideDiscover(): array
     {
         $uris = [
-            'rss-1' => uri_for('https://example.com/rss.xml'),
-            'atom-1' => uri_for('https://example.com/atom.xml'),
+            'rss' => uri_for('https://example.com/rss.xml'),
+            'atom' => uri_for('https://example.com/atom.xml'),
+            'json' => uri_for('https://example.com/feed.json'),
         ];
 
         $headers = [
-            'rss-1' => "<{$uris['rss-1']}>; rel=alternate; type=application/rss+xml",
-            'atom-1' => "<{$uris['atom-1']}>; rel=alternate; type=application/atom+xml",
-            'rss-title' => "<{$uris['rss-1']}>; rel=alternate; type=application/rss+xml; title=\"Example Title\"",
+            'rss' => "<{$uris['rss']}>; rel=alternate; type=application/rss+xml",
+            'atom' => "<{$uris['atom']}>; rel=alternate; type=application/atom+xml",
+            'rss-title' => "<{$uris['rss']}>; rel=alternate; type=application/rss+xml; title=\"Example Title\"",
+            'json' => "<{$uris['json']}>; rel=alternate; type=application/json",
         ];
 
         $bodies = [
-            'rss-1' => file_get_contents(FIXTURES . '/single.rss.html'),
-            'atom-1' => file_get_contents(FIXTURES . '/single.atom.html'),
+            'rss' => file_get_contents(FIXTURES . '/single.rss.html'),
+            'atom' => file_get_contents(FIXTURES . '/single.atom.html'),
             'rss-title' => file_get_contents(FIXTURES . '/single.rss.title.html'),
+            'json' => file_get_contents(FIXTURES . '/single.json.html'),
             'feeds' => file_get_contents(FIXTURES . '/multiple.feeds.html'),
         ];
 
         $feeds = [
-            'rss-1' => new Feed($uris['rss-1'], 'application/rss+xml'),
-            'atom-1' => new Feed($uris['atom-1'], 'application/atom+xml'),
-            'rss-title' => new Feed($uris['rss-1'], 'application/rss+xml', 'Example Title'),
+            'rss' => new Feed($uris['rss'], 'application/rss+xml'),
+            'atom' => new Feed($uris['atom'], 'application/atom+xml'),
+            'rss-title' => new Feed($uris['rss'], 'application/rss+xml', 'Example Title'),
+            'json' => new Feed($uris['json'], 'application/json'),
         ];
 
         $tests = [
             // Single RSS link in header
-            [new Response(200, ['Link' => $headers['rss-1']]), [$feeds['rss-1']]],
+            [new Response(200, ['Link' => $headers['rss']]), [$feeds['rss']]],
 
             // Single Atom link in header
-            [new Response(200, ['Link' => $headers['atom-1']]), [$feeds['atom-1']]],
+            [new Response(200, ['Link' => $headers['atom']]), [$feeds['atom']]],
 
             // Single RSS link with title in header
             [new Response(200, ['Link' => $headers['rss-title']]), [$feeds['rss-title']]],
 
+            // Single JSON link in header
+            [new Response(200, ['Link' => $headers['json']]), [$feeds['json']]],
+
             // Multiple links in header
-            [
-                new Response(200, ['Link' => [$headers['rss-1'], $headers['atom-1'], $headers['rss-title']]]),
-                [$feeds['rss-1'], $feeds['atom-1'], $feeds['rss-title']],
-            ],
+            [new Response(200, ['Link' => $headers]), $feeds],
 
             // Single RSS link in body
-            [new Response(200, [], $bodies['rss-1']), [$feeds['rss-1']]],
+            [new Response(200, [], $bodies['rss']), [$feeds['rss']]],
 
             // Single Atom link in body
-            [new Response(200, [], $bodies['atom-1']), [$feeds['atom-1']]],
+            [new Response(200, [], $bodies['atom']), [$feeds['atom']]],
 
             // Single RSS link with title in body
             [new Response(200, [], $bodies['rss-title']), [$feeds['rss-title']]],
 
+            // Single JSON link in body
+            [new Response(200, [], $bodies['json']), [$feeds['json']]],
+
             // Multiple links in body
             [
                 new Response(200, [], $bodies['feeds']),
-                [$feeds['rss-1'], $feeds['atom-1'], $feeds['rss-title']],
+                $feeds,
             ],
 
             // Single link in header and body
             [
-                new Response(200, ['Link' => $headers['rss-1']], $bodies['atom-1']),
-                [$feeds['rss-1'], $feeds['atom-1']],
+                new Response(200, ['Link' => $headers['rss']], $bodies['atom']),
+                [$feeds['rss'], $feeds['atom']],
             ],
 
             // Single link in header and body (duplicate)
             [
-                new Response(200, ['Link' => $headers['rss-1']], $bodies['rss-1']),
-                [$feeds['rss-1']],
+                new Response(200, ['Link' => $headers['rss']], $bodies['rss']),
+                [$feeds['rss']],
             ],
 
             // Multiple links in header and body (duplicate)
-            [
-                new Response(
-                    200,
-                    ['Link' => [$headers['rss-1'], $headers['atom-1'], $headers['rss-title']]],
-                    $bodies['feeds']
-                ),
-                [
-                    $feeds['rss-1'],
-                    $feeds['atom-1'],
-                    $feeds['rss-title'],
-                ],
-            ],
+            [new Response(200, ['Link' => $headers], $bodies['feeds']), $feeds],
         ];
 
         return $tests;
     }
 }
-
-
-/**
- * Need to test:
- * * relative URLs
- * * link in response headers
- */

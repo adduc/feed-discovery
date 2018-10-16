@@ -36,14 +36,6 @@ class Discovery
         $links = parse_header($response->getHeader('Link'));
         $feeds = [];
 
-        $supported_types = [
-            'application/rss+xml',
-            'application/rdf+xml',
-            'application/atom+xml',
-            'application/xml',
-            'text/xml',
-        ];
-
         foreach ($links as $link) {
             switch (true) {
                 case empty($link[0]):
