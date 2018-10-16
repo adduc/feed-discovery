@@ -1,0 +1,6 @@
+pipeline:
+  build:
+    image: adduc/ubuntu-php:7.2-build
+    commands:
+    - composer install
+    - composer test
