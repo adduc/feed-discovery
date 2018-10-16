@@ -1,6 +1,7 @@
 {
     "name": "adduc/feed-discovery",
     "description": "Parses server responses for references to RSS/Atom/JSON feeds",
+    "license": "MIT",
     "require": {
         "ext-dom": "*",
         "psr/http-message": "^1.0"
