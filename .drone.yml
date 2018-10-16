@@ -4,3 +4,4 @@ pipeline:
     commands:
     - composer install
     - composer test
+    - composer style
